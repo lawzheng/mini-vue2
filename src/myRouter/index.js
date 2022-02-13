@@ -1,3 +1,5 @@
+// https://mp.weixin.qq.com/s/Q3AVQzkKlVbJ1lqIJ7m5rA
+
 import { install } from './install'
 import { createMatcher } from './create-matcher'
 import { HashHistory } from './history/hash'
