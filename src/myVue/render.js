@@ -1,6 +1,7 @@
 // src/render.js
 
 import { createElement, createTextNode } from './vdom/index'
+import { nextTick } from './util/next-tick'
 
 export function renderMixin (Vue) {
   Vue.prototype._render = function () {
@@ -15,7 +16,7 @@ export function renderMixin (Vue) {
   // render函数里面有_c _v _s方法需要定义
   Vue.prototype._c = function (...args) {
     // 创建虚拟dom元素
-    return createElement(...args)
+    return createElement(this, ...args)
   }
 
   Vue.prototype._v = function (text) {
@@ -30,4 +31,7 @@ export function renderMixin (Vue) {
         ? JSON.stringify(val)
         : val
   }
+
+  // 挂载在原型的nextTick方法 可供用户手动调用
+  Vue.prototype.$nextTick = nextTick
 }

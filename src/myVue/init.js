@@ -1,16 +1,20 @@
 // src/init.js
 import { initState } from './state.js'
 import { compileToFunctions } from './compiler/index'
-import { mountComponent } from './lifecycle'
+import { mountComponent, callHook } from './lifecycle'
+import initGlobalMixin from './global-api/mixin'
+import { mergeOptions } from './util/index'
 
 export function initMixin (Vue) {
   Vue.prototype._init = function (options) {
     const vm = this
     // 这里的this代表调用_init方法的对象(实例对象)
     //  this.$options就是用户new Vue的时候传入的属性
-    vm.$options = options
+    vm.$options = mergeOptions(vm.constructor.options, options)
+    callHook(vm, 'beforeCreate') // 初始化数据之前
     // 初始化状态
     initState(vm)
+    callHook(vm, 'created') // 初始化数据之后
 
     // 如果有el属性 进行模板渲染
     if (vm.$options.el) {
@@ -45,4 +49,6 @@ export function initMixin (Vue) {
     // 将当前组件实例挂载到真实的el节点上面
     return mountComponent(vm, el)
   }
+
+  initGlobalMixin(Vue)
 }

@@ -1,6 +1,7 @@
 // src/observer/watcher.js
 
 import { pushTarget, popTarget } from './dep'
+import { queueWatcher } from './scheduler'
 
 // 全局变量id  每次new Watcher都会自增
 let id = 0
@@ -39,8 +40,14 @@ export default class Watcher {
     }
   }
 
-  //   这里简单的就执行以下get方法  之后涉及到计算属性就不一样了
   update () {
+    // 每次watcher进行更新的时候  是否可以让他们先缓存起来  之后再一起调用
+    // 异步队列机制
+    queueWatcher(this)
+  }
+
+  run () {
+    // 真正的触发更新
     this.get()
   }
 }

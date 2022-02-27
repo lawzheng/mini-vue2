@@ -63,6 +63,7 @@ function handleChars (text) {
 
 // 解析标签生成ast核心
 export function parse (html) {
+  root = undefined
   while (html) {
     // 查找<
     const textEnd = html.indexOf('<')

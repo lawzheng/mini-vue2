@@ -9,20 +9,45 @@ export function mountComponent (vm, el) {
 
   // 真实的el选项赋值给实例的$el属性 为之后虚拟dom产生的新的dom替换老的dom做铺垫
   vm.$el = el
+  callHook(vm, 'beforeMount') // 初始渲染之前
   // _update和._render方法都是挂载在Vue原型的方法  类似_init
   const updateComponent = () => {
     console.log('刷新页面')
     vm._update(vm._render())
   }
   // eslint-disable-next-line no-new
-  new Watcher(vm, updateComponent, null, true)
+  new Watcher(
+    vm,
+    updateComponent,
+    () => {
+      callHook(vm, 'beforeUpdate') // 更新之前
+    },
+    true
+  )
+  callHook(vm, 'mounted') // 渲染完成之后
 }
 
 export function lifecycleMixin (Vue) {
   // 把_update挂载在Vue的原型
   Vue.prototype._update = function (vnode) {
     const vm = this
-    // patch是渲染vnode为真实dom核心
-    patch(vm.$el, vnode)
+    const prevVnode = vm._vnode // 保留上一次的vnode
+    vm._vnode = vnode
+    if (!prevVnode) {
+      // patch是渲染vnode为真实dom核心
+      vm.$el = patch(vm.$el, vnode) // 初次渲染 vm._vnode肯定不存在 要通过虚拟节点 渲染出真实的dom 赋值给$el属性
+    } else {
+      vm.$el = patch(prevVnode, vnode) // 更新时把上次的vnode和这次更新的vnode穿进去 进行diff算法
+    }
+  }
+}
+
+export function callHook (vm, hook) {
+  // 依次执行生命周期对应的方法
+  const handlers = vm.$options[hook]
+  if (handlers) {
+    for (let i = 0; i < handlers.length; i++) {
+      handlers[i].call(vm) // 生命周期里面的this指向当前实例
+    }
   }
 }
