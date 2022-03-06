@@ -2,6 +2,7 @@
 
 import { pushTarget, popTarget } from './dep'
 import { queueWatcher } from './scheduler'
+import { isObject } from '../util/index'
 
 // 全局变量id  每次new Watcher都会自增
 let id = 0
@@ -15,18 +16,45 @@ export default class Watcher {
     this.id = id++ // watcher的唯一标识
     this.deps = [] // 存放dep的容器
     this.depsId = new Set() // 用来去重dep
+    this.user = options.user // 标识用户watcher
     // 如果表达式是一个函数
     if (typeof exprOrFn === 'function') {
       this.getter = exprOrFn
+    } else {
+      this.getter = function () {
+        // 用户watcher传过来的可能是一个字符串   类似a.a.a.a.b
+        const path = exprOrFn.split('.')
+        let obj = vm
+        for (let i = 0; i < path.length; i++) {
+          obj = obj[path[i]] // vm.a.a.a.a.b
+        }
+        return obj
+      }
     }
     // 实例化就会默认调用get方法
-    this.get()
+    this.value = this.get()
+  }
+
+  run () {
+    const newVal = this.get() // 新值
+    const oldVal = this.value // 老值
+    this.value = newVal // 现在的新值将成为下一次变化的老值
+    if (this.user) {
+      // 如果两次的值不相同  或者值是引用类型 因为引用类型新老值是相等的 他们是指向同一引用地址
+      if (newVal !== oldVal || isObject(newVal)) {
+        this.cb.call(this.vm, newVal, oldVal)
+      }
+    } else {
+      // 渲染watcher
+      this.cb.call(this.vm)
+    }
   }
 
   get () {
     pushTarget(this) // 在调用方法之前先把当前watcher实例推到全局Dep.target上
-    this.getter() // 如果watcher是渲染watcher 那么就相当于执行  vm._update(vm._render()) 这个方法在render函数执行的时候会取值 从而实现依赖收集
+    const res = this.getter() // 如果watcher是渲染watcher 那么就相当于执行  vm._update(vm._render()) 这个方法在render函数执行的时候会取值 从而实现依赖收集
     popTarget() // 在调用方法之后把当前watcher实例从全局Dep.target移除
+    return res
   }
 
   //   把dep放到deps里面 同时保证同一个dep只被保存到watcher一次  同样的  同一个watcher也只会保存在dep一次
@@ -44,10 +72,5 @@ export default class Watcher {
     // 每次watcher进行更新的时候  是否可以让他们先缓存起来  之后再一起调用
     // 异步队列机制
     queueWatcher(this)
-  }
-
-  run () {
-    // 真正的触发更新
-    this.get()
   }
 }

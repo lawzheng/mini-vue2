@@ -2,6 +2,7 @@
 
 import { createElement, createTextNode } from './vdom/index'
 import { nextTick } from './util/next-tick'
+import Watcher from './observer/watcher'
 
 export function renderMixin (Vue) {
   Vue.prototype._render = function () {
@@ -34,4 +35,15 @@ export function renderMixin (Vue) {
 
   // 挂载在原型的nextTick方法 可供用户手动调用
   Vue.prototype.$nextTick = nextTick
+
+  Vue.prototype.$watch = function (exprOrFn, cb, options) {
+    const vm = this
+    //  user: true 这里表示是一个用户watcher
+    // eslint-disable-next-line no-unused-vars
+    const watcher = new Watcher(vm, exprOrFn, cb, { ...options, user: true })
+    // 如果有immediate属性 代表需要立即执行回调
+    if (options.immediate) {
+      cb() // 如果立刻执行
+    }
+  }
 }

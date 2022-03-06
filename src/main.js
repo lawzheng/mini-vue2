@@ -28,9 +28,9 @@ const vm = new Vue({
   },
   template: `<div id="a">
       {{aa}}
-      <parent-component></parent-component>
-      <child-component></child-component>
       </div>`,
+  // <parent-component></parent-component>
+  // <child-component></child-component>
   // 局部组件
   components: {
     'child-component': {
@@ -39,9 +39,30 @@ const vm = new Vue({
         console.log('我是子组件')
       }
     }
+  },
+  watch: {
+    aa (newVal, oldVal) {
+      console.log('watch', newVal)
+    }
+    // aa: {
+    //   handle(newVal， oldVal) {
+    //     console.log(newVal);
+    //   },
+    //   deep: true
+    // },
+    // aa: 'doSomething',
+    // aa: [{
+    //   handle(newVal， oldVal) {
+    //     console.log(newVal);
+    //   },
+    //   deep: true
+    // }]
   }
   // router,
   // render: h => h(App)
 })
 // vm.$mount('#app')
 console.log(vm)
+setTimeout(() => {
+  vm.aa = 1111
+}, 1000)
