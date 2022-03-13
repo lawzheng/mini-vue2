@@ -17,6 +17,9 @@ export default class Watcher {
     this.deps = [] // 存放dep的容器
     this.depsId = new Set() // 用来去重dep
     this.user = options.user // 标识用户watcher
+    this.lazy = options.lazy // 标识计算属性watcher
+    this.dirty = this.lazy // dirty可变  表示计算watcher是否需要重新计算 默认值是true
+
     // 如果表达式是一个函数
     if (typeof exprOrFn === 'function') {
       this.getter = exprOrFn
@@ -32,7 +35,7 @@ export default class Watcher {
       }
     }
     // 实例化就会默认调用get方法
-    this.value = this.get()
+    this.value = this.lazy ? undefined : this.get()
   }
 
   run () {
@@ -52,7 +55,7 @@ export default class Watcher {
 
   get () {
     pushTarget(this) // 在调用方法之前先把当前watcher实例推到全局Dep.target上
-    const res = this.getter() // 如果watcher是渲染watcher 那么就相当于执行  vm._update(vm._render()) 这个方法在render函数执行的时候会取值 从而实现依赖收集
+    const res = this.getter.call(this.vm) // 如果watcher是渲染watcher 那么就相当于执行  vm._update(vm._render()) 这个方法在render函数执行的时候会取值 从而实现依赖收集
     popTarget() // 在调用方法之后把当前watcher实例从全局Dep.target移除
     return res
   }
@@ -69,8 +72,27 @@ export default class Watcher {
   }
 
   update () {
-    // 每次watcher进行更新的时候  是否可以让他们先缓存起来  之后再一起调用
-    // 异步队列机制
-    queueWatcher(this)
+    // 计算属性依赖的值发生变化 只需要把dirty置为true  下次访问到了重新计算
+    if (this.lazy) {
+      this.dirty = true
+    } else {
+      // 每次watcher进行更新的时候  可以让他们先缓存起来  之后再一起调用
+      // 异步队列机制
+      queueWatcher(this)
+    }
+  }
+
+  // 计算属性重新进行计算 并且计算完成把dirty置为false
+  evaluate () {
+    this.value = this.get()
+    this.dirty = false
+  }
+
+  depend () {
+    // 计算属性的watcher存储了依赖项的dep
+    let i = this.deps.length
+    while (i--) {
+      this.deps[i].depend() // 调用依赖项的dep去收集渲染watcher
+    }
   }
 }

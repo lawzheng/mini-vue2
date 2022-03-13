@@ -21,13 +21,14 @@ const vm = new Vue({
   el: '#app',
   data () {
     return {
-      aa: 1
+      aa: 1,
+      bb: 2
     }
   },
   created () {
   },
   template: `<div id="a">
-      {{aa}}
+      {{aa}}-{{computedName}}
       </div>`,
   // <parent-component></parent-component>
   // <child-component></child-component>
@@ -57,6 +58,11 @@ const vm = new Vue({
     //   },
     //   deep: true
     // }]
+  },
+  computed: {
+    computedName () {
+      return this.aa + this.bb
+    }
   }
   // router,
   // render: h => h(App)
@@ -65,4 +71,5 @@ const vm = new Vue({
 console.log(vm)
 setTimeout(() => {
   vm.aa = 1111
+  vm.bb = 2222
 }, 1000)
