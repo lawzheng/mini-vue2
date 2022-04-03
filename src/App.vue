@@ -3,6 +3,7 @@
     <div id="nav">
       <router-link to="/">Home</router-link> |
       <router-link to="/about">About</router-link> |
+      <router-link to="/testVuex">TestVuex</router-link> |
       <router-link :to="{ path: '/parent' }">Parent</router-link> |
       <router-link :to="{ path: '/parent/child' }">Parent Child</router-link>
     </div>
